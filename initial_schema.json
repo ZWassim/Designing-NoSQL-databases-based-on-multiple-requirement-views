@@ -1,0 +1,75 @@
+{
+  "database": "ecommerce_oltp",
+  "collections": [
+    {
+      "name": "users",
+      "schema": {
+        "_id": "ObjectId",
+        "email": "string (unique index)",
+        "name": "string",
+        "address": "string",
+        "created_at": "timestamp"
+      },
+      "indexes": [
+        { "field": "email", "type": "unique" }
+      ]
+    },
+    {
+      "name": "products",
+      "schema": {
+        "_id": "ObjectId",
+        "sku": "string (unique)",
+        "name": "string",
+        "description": "string",
+        "price": "number",
+        "category": "string",
+        "tags": ["string"],
+        "inventory": "number",
+        "created_at": "timestamp"
+      },
+      "indexes": [
+        { "field": "sku", "type": "unique" },
+        { "field": "name", "type": "text" },
+        { "field": "description", "type": "text" },
+        { "field": "category" }
+      ]
+    },
+    {
+      "name": "orders",
+      "schema": {
+        "_id": "ObjectId",
+        "user_id": "ObjectId (reference to users._id)",
+        "order_date": "timestamp",
+        "items": [
+          {
+            "product_id": "ObjectId",
+            "quantity": "number",
+            "unit_price": "number"
+          }
+        ],
+        "total_amount": "number",
+        "delivery_status": "string (pending|shipped|delivered|cancelled)",
+        "shipping_address": "string",
+        "payment_status": "string"
+      },
+      "indexes": [
+        { "field": "user_id" },
+        { "field": "order_date" },
+        { "field": "delivery_status" }
+      ],
+      "write_strategy": {
+        "write_concern": "majority",
+        "journaled": true
+      }
+    }
+  ],
+  "scalability": {
+    "shard_key": "orders._id (hashed) for orders collection",
+    "replication": "3‑node replica set for high read throughput"
+  },
+  "query_patterns": {
+    "browse_products": "text search on products.name/products.description",
+    "place_order": "insert into orders (high write throughput)",
+    "track_order": "find by _id or user_id + order_date"
+  }
+}
